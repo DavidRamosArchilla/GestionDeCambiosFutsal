@@ -1,34 +1,21 @@
 package com.example.cambiosfutsal;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.text.InputType;
 import android.util.Log;
-import android.view.LayoutInflater;
-
 import android.view.Menu;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Chronometer;
 import android.widget.EditText;
-import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class MainActivity extends AppCompatActivity implements CambiosFragment.Listener, PartidoFragment.CambioListerer {
 
@@ -185,8 +172,9 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
     }
 
     @Override
-    public void onCloseFragment() {
+    public void onCloseFragment(String jugandoCambiado, String banquilloCambiado) {
 //        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, partidoFragment).commit();
+        partidoFragment.realizarCambio(jugandoCambiado, banquilloCambiado);
         getSupportFragmentManager().beginTransaction().remove(cambiosFragment).commit();
     }
 

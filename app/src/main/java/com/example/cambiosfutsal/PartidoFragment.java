@@ -19,6 +19,7 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -46,8 +47,8 @@ public class PartidoFragment extends Fragment {
     public PartidoFragment(List<String> jugadores) {
         this.jugadores = jugadores;
         int numTitulares = Math.min(jugadores.size(), 4);
-        adapterJugando = new ItemAdapter(jugadores.subList(0,numTitulares));
-        adapterBanquillo = new ItemAdapter(jugadores.subList(numTitulares, jugadores.size()));
+        adapterJugando = new ItemAdapter(new ArrayList<>(jugadores.subList(0,numTitulares)));
+        adapterBanquillo = new ItemAdapter(new ArrayList<>(jugadores.subList(numTitulares, jugadores.size())));
     }
 
     @Override
@@ -99,7 +100,7 @@ public class PartidoFragment extends Fragment {
         botonCambio.setOnClickListener(v -> {
             if(jugadores.size()>4){
                 ((CambioListerer) getActivity()).onRealizarCambio(jugadores.subList(0,4)
-                        , jugadores.subList(4, jugadores.size() - 1));
+                        , jugadores.subList(4, jugadores.size()));
             }
             else{
                 Snackbar.make(view, "No hay suficientes jugadores para hcer un cambio", Snackbar.LENGTH_LONG).show();
@@ -115,16 +116,21 @@ public class PartidoFragment extends Fragment {
         jugadores.add(nombre);
         int numTitulares = Math.min(jugadores.size(), 4);
         if (numTitulares == 4){
-            adapterJugando.addItem(nombre);
+            adapterBanquillo.addItem(nombre);
         }
         else{
-            adapterBanquillo.addItem(nombre);
+            adapterJugando.addItem(nombre);
         }
     }
 
     public void setAdapters(){
         recyclerViewJugando.setAdapter(adapterJugando);
         recyclerViewBanquillo.setAdapter(adapterBanquillo);
+    }
+    public void realizarCambio(String jugandoCambiado, String banquilloCambiado) {
+        Collections.swap(jugadores, jugadores.indexOf(jugandoCambiado), jugadores.indexOf(banquilloCambiado));
+        adapterBanquillo.hacerCambio(banquilloCambiado, jugandoCambiado);
+        adapterJugando.hacerCambio(jugandoCambiado, banquilloCambiado);
     }
 
     private static class ItemAdapter extends RecyclerView.Adapter<PartidoFragment.ItemViewHolder> {
@@ -180,7 +186,11 @@ public class PartidoFragment extends Fragment {
             items.add(item);
             notifyItemInserted(items.size() - 1);
         }
-
+        public void hacerCambio(String jugadorParaQuitar, String jugadorParaAniadir){
+            items.add(jugadorParaAniadir);
+            items.remove(jugadorParaQuitar);
+            notifyDataSetChanged();
+        }
     }
 
     private static class ItemViewHolder extends RecyclerView.ViewHolder {

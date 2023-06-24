@@ -16,20 +16,21 @@ import android.widget.ListView;
 
 import com.google.android.material.snackbar.Snackbar;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
 public class CambiosFragment extends Fragment {
 
     interface Listener {
-        public void onCloseFragment();
+        void onCloseFragment(String jugandoCambiado, String banquilloCambiado);
     }
 
     private List<String> listaJugando;
     private List<String> listaBanquillo;
     private ListView banqulloListView;
     private ListView jugandoListView;
+    private String jugandoCambiado;
+    private String banquilloCambiado;
 
     public CambiosFragment() {
         // Required empty public constructor
@@ -39,6 +40,8 @@ public class CambiosFragment extends Fragment {
     public CambiosFragment(List<String> listaJugando, List<String> listaBanquillo) {
         this.listaJugando = listaJugando;
         this.listaBanquillo = listaBanquillo;
+        this.jugandoCambiado = null;
+        this.banquilloCambiado = null;
     }
 
     @Override
@@ -62,11 +65,11 @@ public class CambiosFragment extends Fragment {
         jugandoListView = view.findViewById(R.id.ListaJugando);
 
         // Create and set the adapters for the lists
-        ArrayAdapter<String> banquilloAdapter = new ArrayAdapter<String>(requireContext(),
+        ArrayAdapter<String> banquilloAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_list_item_single_choice, listaBanquillo);
         banqulloListView.setAdapter(banquilloAdapter);
 
-        ArrayAdapter<String> jugandoAdapter = new ArrayAdapter<String>(requireContext(),
+        ArrayAdapter<String> jugandoAdapter = new ArrayAdapter<>(requireContext(),
                 android.R.layout.simple_list_item_single_choice, listaJugando);
         jugandoListView.setAdapter(jugandoAdapter);
 
@@ -75,7 +78,7 @@ public class CambiosFragment extends Fragment {
             // Handle item selection
             String selectedItem = listaBanquillo.get(position);
             // Perform any desired actions with the selected item
-            Snackbar.make(viewOnClick, selectedItem, Snackbar.LENGTH_LONG).show();
+            banquilloCambiado = selectedItem;
         });
 
         jugandoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -84,7 +87,7 @@ public class CambiosFragment extends Fragment {
                 // Handle item selection
                 String selectedItem = listaJugando.get(position);
                 // Perform any desired actions with the selected item
-                Snackbar.make(viewOnClick, selectedItem, Snackbar.LENGTH_LONG).show();
+                jugandoCambiado = selectedItem;
             }
         });
 
@@ -92,7 +95,13 @@ public class CambiosFragment extends Fragment {
 
         Button b = view.findViewById(R.id.botonCerrarFragment);
         b.setOnClickListener(v -> {
-            ((Listener) getActivity()).onCloseFragment();
+            if((jugandoCambiado != null) && (banquilloCambiado != null)){
+                ((Listener) getActivity()).onCloseFragment(jugandoCambiado, banquilloCambiado);
+            }
+            else{
+                Snackbar.make(view, "Selecciona jugadores para cmabiar", Snackbar.LENGTH_LONG).show();
+            }
+
         });
     }
 
