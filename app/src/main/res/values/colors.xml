@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="amarillo_thunder">#AA9828</color>
+    <color name="amarillo_oscuro">#6F631B</color>
+    <color name="azul_secundario">#283AAA</color>
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

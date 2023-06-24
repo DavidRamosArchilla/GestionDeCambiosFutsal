@@ -109,9 +109,6 @@ public class PartidoFragment extends Fragment {
         });
     }
 
-    public void setJugadores(List<String> jugadores) {
-        this.jugadores = jugadores;
-    }
     public void addItem(String nombre) {
         jugadores.add(nombre);
         int numTitulares = Math.min(jugadores.size(), 4);

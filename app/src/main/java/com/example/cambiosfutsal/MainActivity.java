@@ -97,12 +97,9 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
         builder.setTitle("Remove Name");
 
         // Set up the list of names
-        builder.setItems(nameArray, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // Remove the selected name
-                removeName(nameArray[which]);
-            }
+        builder.setItems(nameArray, (dialog, which) -> {
+            // Remove the selected name
+            removeName(nameArray[which]);
         });
 
         // Show the dialog

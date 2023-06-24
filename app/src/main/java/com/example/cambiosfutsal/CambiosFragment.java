@@ -78,18 +78,16 @@ public class CambiosFragment extends Fragment {
         // Set item click listeners for the lists
         banqulloListView.setOnItemClickListener((parent, viewOnClick, position, id) -> {
             // Handle item selection
-            String selectedItem = listaBanquillo.get(position);
             // Perform any desired actions with the selected item
-            banquilloCambiado = selectedItem;
+            banquilloCambiado = listaBanquillo.get(position);
         });
 
         jugandoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View viewOnClick, int position, long id) {
                 // Handle item selection
-                String selectedItem = listaJugando.get(position);
                 // Perform any desired actions with the selected item
-                jugandoCambiado = selectedItem;
+                jugandoCambiado = listaJugando.get(position);
             }
         });
 
@@ -110,16 +108,4 @@ public class CambiosFragment extends Fragment {
             ((Listener) getActivity()).onCloseFragment();
         });
     }
-
-    // Method to update the lists with new items
-//    public void updateLists(List<String> leftItems, List<String> rightItems) {
-//        leftListItems.clear();
-//        leftListItems.addAll(leftItems);
-//        leftListAdapter.notifyDataSetChanged();
-//
-//        rightListItems.clear();
-//        rightListItems.addAll(rightItems);
-//        rightListAdapter.notifyDataSetChanged();
-//    }
-
 }
