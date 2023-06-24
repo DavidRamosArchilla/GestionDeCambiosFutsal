@@ -123,6 +123,13 @@ public class PartidoFragment extends Fragment {
         }
     }
 
+    public void removeItem(String nombre) {
+        jugadores.remove(nombre);
+        adapterBanquillo.removeItem(nombre);
+        adapterJugando.removeItem(nombre);
+    }
+
+
     public void setAdapters(){
         recyclerViewJugando.setAdapter(adapterJugando);
         recyclerViewBanquillo.setAdapter(adapterBanquillo);
@@ -156,9 +163,6 @@ public class PartidoFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull PartidoFragment.ItemViewHolder holder, int position) {
             holder.getTextViewNombre().setText(items.get(position));
-//            if (!holder.getCronometroTiempo().isActivated()){
-//                holder.getCronometroTiempo().start();
-//            }
             if(!holders.contains(holder))
                 holders.add(holder);
         }
@@ -186,15 +190,25 @@ public class PartidoFragment extends Fragment {
             items.add(item);
             notifyItemInserted(items.size() - 1);
         }
+
+        public void removeItem(String nombre) {
+            items.remove(nombre);
+            notifyDataSetChanged();
+        }
+
         public void hacerCambio(String jugadorParaQuitar, String jugadorParaAniadir){
             items.add(jugadorParaAniadir);
             items.remove(jugadorParaQuitar);
             notifyDataSetChanged();
+
+            ItemViewHolder viewHolder = holders.get(items.size() - 1);
+            viewHolder.getCronometroTiempo().setBase(SystemClock.elapsedRealtime());
         }
+
+
     }
 
     private static class ItemViewHolder extends RecyclerView.ViewHolder {
-
         private TextView textViewNombre;
         private Chronometer cronometroTiempo;
         private long tiempoAlPausar;

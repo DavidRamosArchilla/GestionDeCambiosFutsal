@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
         }
         editor.apply();
         actualizarLista(jugadoresActuales);
+        partidoFragment.removeItem(name);
     }
 
     private void actualizarLista(ArrayList<String> jugadoresActuales) {
@@ -175,6 +176,11 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
     public void onCloseFragment(String jugandoCambiado, String banquilloCambiado) {
 //        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, partidoFragment).commit();
         partidoFragment.realizarCambio(jugandoCambiado, banquilloCambiado);
+        this.onCloseFragment();
+    }
+
+    @Override
+    public void onCloseFragment() {
         getSupportFragmentManager().beginTransaction().remove(cambiosFragment).commit();
     }
 

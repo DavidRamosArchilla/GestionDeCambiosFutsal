@@ -23,6 +23,8 @@ public class CambiosFragment extends Fragment {
 
     interface Listener {
         void onCloseFragment(String jugandoCambiado, String banquilloCambiado);
+
+        void onCloseFragment();
     }
 
     private List<String> listaJugando;
@@ -93,8 +95,8 @@ public class CambiosFragment extends Fragment {
 
         // Set click listener for the button
 
-        Button b = view.findViewById(R.id.botonCerrarFragment);
-        b.setOnClickListener(v -> {
+        Button botonConfirmar = view.findViewById(R.id.botonCerrarFragment);
+        botonConfirmar.setOnClickListener(v -> {
             if((jugandoCambiado != null) && (banquilloCambiado != null)){
                 ((Listener) getActivity()).onCloseFragment(jugandoCambiado, banquilloCambiado);
             }
@@ -102,6 +104,10 @@ public class CambiosFragment extends Fragment {
                 Snackbar.make(view, "Selecciona jugadores para cmabiar", Snackbar.LENGTH_LONG).show();
             }
 
+        });
+        Button botonCancelar = view.findViewById(R.id.botonCancelar);
+        botonCancelar.setOnClickListener(v -> {
+            ((Listener) getActivity()).onCloseFragment();
         });
     }
 
