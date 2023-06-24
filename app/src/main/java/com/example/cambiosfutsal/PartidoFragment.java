@@ -2,57 +2,57 @@ package com.example.cambiosfutsal;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.Chronometer;
+import android.widget.TextView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PartidoFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
+
 public class PartidoFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    interface CambioListerer{
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+        void onRealizarCambio(List<String> jugando, List<String> banquillo);
+    }
+
+    private RecyclerView recyclerViewJugando;
+    private RecyclerView recyclerViewBanquillo;
+    private ItemAdapter adapterJugando;
+    private ItemAdapter adapterBanquillo;
+    private Chronometer cronometro = null;
+    private AtomicLong tiempoAlPausar;
+    private boolean relojPausado = true;
+    private List<String> jugadores;
 
     public PartidoFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment PartidoFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static PartidoFragment newInstance(String param1, String param2) {
-        PartidoFragment fragment = new PartidoFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public PartidoFragment(List<String> jugadores) {
+        this.jugadores = jugadores;
+        int numTitulares = Math.min(jugadores.size(), 4);
+        adapterJugando = new ItemAdapter(jugadores.subList(0,numTitulares));
+        adapterBanquillo = new ItemAdapter(jugadores.subList(numTitulares, jugadores.size()));
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -60,5 +60,156 @@ public class PartidoFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_partido, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        cronometro = view.findViewById(R.id.cronometroPartido);
+
+        recyclerViewJugando = view.findViewById(R.id.recyclerViewJugando);
+        recyclerViewJugando.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        recyclerViewBanquillo = view.findViewById(R.id.recyclerViewBanquillo);
+        recyclerViewBanquillo.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        this.setAdapters();
+
+        Button botonPlayPausa = view.findViewById(R.id.pararIniciarTiempo);
+        tiempoAlPausar = new AtomicLong();
+        botonPlayPausa.setOnClickListener(v -> {
+            long elapsedRealTime = SystemClock.elapsedRealtime();
+            long resumeTime = elapsedRealTime + tiempoAlPausar.get();
+            adapterJugando.toggleChronometers(relojPausado, elapsedRealTime);
+            adapterBanquillo.toggleChronometers(relojPausado, elapsedRealTime);
+            if(relojPausado){
+                cronometro.setBase(resumeTime);
+                cronometro.start();
+                relojPausado = false;
+            }
+            else{
+                cronometro.stop();
+                relojPausado = true;
+                tiempoAlPausar.set(cronometro.getBase() - SystemClock.elapsedRealtime());
+            }
+        });
+
+        Button botonCambio = view.findViewById(R.id.botonCambiarJugadores);
+        botonCambio.setOnClickListener(v -> {
+            if(jugadores.size()>4){
+                ((CambioListerer) getActivity()).onRealizarCambio(jugadores.subList(0,4)
+                        , jugadores.subList(4, jugadores.size() - 1));
+            }
+            else{
+                Snackbar.make(view, "No hay suficientes jugadores para hcer un cambio", Snackbar.LENGTH_LONG).show();
+            }
+
+        });
+    }
+
+    public void setJugadores(List<String> jugadores) {
+        this.jugadores = jugadores;
+    }
+    public void addItem(String nombre) {
+        jugadores.add(nombre);
+        int numTitulares = Math.min(jugadores.size(), 4);
+        if (numTitulares == 4){
+            adapterJugando.addItem(nombre);
+        }
+        else{
+            adapterBanquillo.addItem(nombre);
+        }
+    }
+
+    public void setAdapters(){
+        recyclerViewJugando.setAdapter(adapterJugando);
+        recyclerViewBanquillo.setAdapter(adapterBanquillo);
+    }
+
+    private static class ItemAdapter extends RecyclerView.Adapter<PartidoFragment.ItemViewHolder> {
+
+        private List<String> items;
+        private List<PartidoFragment.ItemViewHolder> holders = new ArrayList<>();
+
+        public ItemAdapter(List<String> items) {
+            this.items = items;
+        }
+
+        @NonNull
+        @Override
+        public PartidoFragment.ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_layout, parent, false);
+            PartidoFragment.ItemViewHolder viewHolder = new PartidoFragment.ItemViewHolder(view);
+            if(!holders.contains(viewHolder))
+                holders.add(viewHolder);
+            return viewHolder;
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull PartidoFragment.ItemViewHolder holder, int position) {
+            holder.getTextViewNombre().setText(items.get(position));
+//            if (!holder.getCronometroTiempo().isActivated()){
+//                holder.getCronometroTiempo().start();
+//            }
+            if(!holders.contains(holder))
+                holders.add(holder);
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+
+        public void toggleChronometers(boolean start, long elapsedRealTime) {
+            for (PartidoFragment.ItemViewHolder holder : holders) {
+                Chronometer cronometro = holder.getCronometroTiempo();
+                long resumeTime = elapsedRealTime + holder.getTiempoAlPausar();
+                if (start) {
+                    cronometro.setBase(resumeTime);
+                    cronometro.start();
+                } else {
+                    cronometro.stop();
+                    holder.setTiempoAlPausar(cronometro.getBase() - elapsedRealTime);
+                }
+            }
+        }
+
+        public void addItem(String item) {
+            items.add(item);
+            notifyItemInserted(items.size() - 1);
+        }
+
+    }
+
+    private static class ItemViewHolder extends RecyclerView.ViewHolder {
+
+        private TextView textViewNombre;
+        private Chronometer cronometroTiempo;
+        private long tiempoAlPausar;
+
+        public ItemViewHolder(@NonNull View itemView) {
+            super(itemView);
+            textViewNombre = itemView.findViewById(R.id.textViewNombre);
+            cronometroTiempo = itemView.findViewById(R.id.cronometroJugador);
+            tiempoAlPausar = 0;
+        }
+
+        public TextView getTextViewNombre() {
+            return textViewNombre;
+        }
+
+        public Chronometer getCronometroTiempo() {
+            return cronometroTiempo;
+        }
+
+        public long getTiempoAlPausar() {
+            return tiempoAlPausar;
+        }
+
+        public void setTiempoAlPausar(long tiempoAlPausar) {
+            this.tiempoAlPausar = tiempoAlPausar;
+        }
     }
 }

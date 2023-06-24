@@ -30,58 +30,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MainActivity extends AppCompatActivity implements CambiosFragment.Listener {
-    private RecyclerView recyclerViewJugando;
-    private RecyclerView recyclerViewBanquillo;
+public class MainActivity extends AppCompatActivity implements CambiosFragment.Listener, PartidoFragment.CambioListerer {
+
     private Toolbar toolbar;
     private List<String> jugadores;
-    private ItemAdapter adapterJugando;
-    private ItemAdapter adapterBanquillo;
-    private AtomicLong tiempoAlPausar;
-    private boolean relojPausado;
+    private PartidoFragment partidoFragment = null;
     public final String PREFERENCES_JUGADORES = "my_prefs_jugadores";
     public final String SHARED_PREFS_FILE = "file_saved_prefs_jugadores";
+    private CambiosFragment cambiosFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         jugadores = getAllNames();
-        relojPausado = true;
-        Chronometer cronometro = findViewById(R.id.cronometroPartido);
 
-        recyclerViewJugando = findViewById(R.id.recyclerViewJugando);
-        recyclerViewJugando.setLayoutManager(new LinearLayoutManager(this));
-
-        recyclerViewBanquillo = findViewById(R.id.recyclerViewBanquillo);
-        recyclerViewBanquillo.setLayoutManager(new LinearLayoutManager(this));
-
-        this.setAdapters();
         this.loadToolbar();
+        if (partidoFragment == null)
+            partidoFragment = new PartidoFragment(jugadores);
+        getSupportFragmentManager().beginTransaction().add(R.id.fragment_container_view, partidoFragment).commit();
 
-        Button botonPlayPausa = findViewById(R.id.pararIniciarTiempo);
-        tiempoAlPausar = new AtomicLong();
-        botonPlayPausa.setOnClickListener(v -> {
-            long elapsedRealTime = SystemClock.elapsedRealtime();
-            long resumeTime = elapsedRealTime + tiempoAlPausar.get();
-            adapterJugando.toggleChronometers(relojPausado, elapsedRealTime);
-            adapterBanquillo.toggleChronometers(relojPausado, elapsedRealTime);
-            if(relojPausado){
-                cronometro.setBase(resumeTime);
-                cronometro.start();
-                relojPausado = false;
-            }
-            else{
-                cronometro.stop();
-                relojPausado = true;
-                tiempoAlPausar.set(cronometro.getBase() - SystemClock.elapsedRealtime());
-            }
-        });
-
-        Button botonCambio = findViewById(R.id.botonCambiarJugadores);
-        botonCambio.setOnClickListener(v -> {
-            getSupportFragmentManager().beginTransaction().add(R.id.linearLayout, new CambiosFragment()).commit();
-        });
     }
 
     private void loadToolbar() {
@@ -167,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
         editor.apply();
         Log.i("tras añadir", jugadoresActuales.toString());
         actualizarLista(jugadoresActuales);
+        partidoFragment.addItem(name);
     }
 
     private void removeName(String name) {
@@ -188,16 +157,11 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
 
     private void actualizarLista(ArrayList<String> jugadoresActuales) {
         this.jugadores = jugadoresActuales;
-        this.setAdapters();
+//        partidoFragment.setJugadores(jugadoresActuales);
+//        partidoFragment.addItem();
     }
 
-    private void setAdapters(){
-        int numTitulares = Math.min(jugadores.size(), 4);
-        adapterJugando = new ItemAdapter(jugadores.subList(0,numTitulares));
-        adapterBanquillo = new ItemAdapter(jugadores.subList(numTitulares, jugadores.size()));
-        recyclerViewJugando.setAdapter(adapterJugando);
-        recyclerViewBanquillo.setAdapter(adapterBanquillo);
-    }
+
 
     private List<String> getAllNames() {
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS_FILE, MODE_PRIVATE);
@@ -222,85 +186,14 @@ public class MainActivity extends AppCompatActivity implements CambiosFragment.L
 
     @Override
     public void onCloseFragment() {
-        getSupportFragmentManager().popBackStack();
+//        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container_view, partidoFragment).commit();
+        getSupportFragmentManager().beginTransaction().remove(cambiosFragment).commit();
     }
 
 
-    private static class ItemAdapter extends RecyclerView.Adapter<ItemViewHolder> {
-
-        private List<String> items;
-        private List<ItemViewHolder> holders = new ArrayList<>();
-
-        public ItemAdapter(List<String> items) {
-            this.items = items;
-        }
-
-        @NonNull
-        @Override
-        public ItemViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_layout, parent, false);
-            return new ItemViewHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ItemViewHolder holder, int position) {
-            holder.getTextViewNombre().setText(items.get(position));
-//            if (!holder.getCronometroTiempo().isActivated()){
-//                holder.getCronometroTiempo().start();
-//            }
-            if(!holders.contains(holder))
-                holders.add(holder);
-        }
-
-        @Override
-        public int getItemCount() {
-            return items.size();
-        }
-
-        public void toggleChronometers(boolean start, long elapsedRealTime) {
-            for (ItemViewHolder holder : holders) {
-                Chronometer cronometro = holder.getCronometroTiempo();
-                long resumeTime = elapsedRealTime + holder.getTiempoAlPausar();
-                if (start) {
-                    cronometro.setBase(resumeTime);
-                    cronometro.start();
-                } else {
-                    cronometro.stop();
-                    holder.setTiempoAlPausar(cronometro.getBase() - elapsedRealTime);
-                }
-            }
-        }
-    }
-
-    private static class ItemViewHolder extends RecyclerView.ViewHolder {
-
-        private TextView textViewNombre;
-        private Chronometer cronometroTiempo;
-
-        private long tiempoAlPausar;
-
-        public ItemViewHolder(@NonNull View itemView) {
-            super(itemView);
-            textViewNombre = itemView.findViewById(R.id.textViewNombre);
-            cronometroTiempo = itemView.findViewById(R.id.cronometroJugador);
-            tiempoAlPausar = 0;
-        }
-
-        public TextView getTextViewNombre() {
-            return textViewNombre;
-        }
-
-        public Chronometer getCronometroTiempo() {
-            return cronometroTiempo;
-        }
-
-        public long getTiempoAlPausar() {
-            return tiempoAlPausar;
-        }
-
-        public void setTiempoAlPausar(long tiempoAlPausar) {
-            this.tiempoAlPausar = tiempoAlPausar;
-        }
+    @Override
+    public void onRealizarCambio(List<String> jugando, List<String> banquillo) {
+        cambiosFragment = new CambiosFragment(jugando, banquillo);
+        getSupportFragmentManager().beginTransaction().add(R.id.fragment_container_view, cambiosFragment).commit();
     }
 }

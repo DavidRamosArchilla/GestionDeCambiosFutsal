@@ -9,54 +9,41 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link CambiosFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class CambiosFragment extends Fragment {
 
     interface Listener {
         public void onCloseFragment();
     }
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private List<String> listaJugando;
+    private List<String> listaBanquillo;
+    private ListView banqulloListView;
+    private ListView jugandoListView;
 
     public CambiosFragment() {
         // Required empty public constructor
+
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment CambiosFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static CambiosFragment newInstance(String param1, String param2) {
-        CambiosFragment fragment = new CambiosFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public CambiosFragment(List<String> listaJugando, List<String> listaBanquillo) {
+        this.listaJugando = listaJugando;
+        this.listaBanquillo = listaBanquillo;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -70,9 +57,54 @@ public class CambiosFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        banqulloListView = view.findViewById(R.id.listaBanquillo);
+        jugandoListView = view.findViewById(R.id.ListaJugando);
+
+        // Create and set the adapters for the lists
+        ArrayAdapter<String> banquilloAdapter = new ArrayAdapter<String>(requireContext(),
+                android.R.layout.simple_list_item_single_choice, listaBanquillo);
+        banqulloListView.setAdapter(banquilloAdapter);
+
+        ArrayAdapter<String> jugandoAdapter = new ArrayAdapter<String>(requireContext(),
+                android.R.layout.simple_list_item_single_choice, listaJugando);
+        jugandoListView.setAdapter(jugandoAdapter);
+
+        // Set item click listeners for the lists
+        banqulloListView.setOnItemClickListener((parent, viewOnClick, position, id) -> {
+            // Handle item selection
+            String selectedItem = listaBanquillo.get(position);
+            // Perform any desired actions with the selected item
+            Snackbar.make(viewOnClick, selectedItem, Snackbar.LENGTH_LONG).show();
+        });
+
+        jugandoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View viewOnClick, int position, long id) {
+                // Handle item selection
+                String selectedItem = listaJugando.get(position);
+                // Perform any desired actions with the selected item
+                Snackbar.make(viewOnClick, selectedItem, Snackbar.LENGTH_LONG).show();
+            }
+        });
+
+        // Set click listener for the button
+
         Button b = view.findViewById(R.id.botonCerrarFragment);
-        b.setOnClickListener(v ->{
+        b.setOnClickListener(v -> {
             ((Listener) getActivity()).onCloseFragment();
         });
     }
+
+    // Method to update the lists with new items
+//    public void updateLists(List<String> leftItems, List<String> rightItems) {
+//        leftListItems.clear();
+//        leftListItems.addAll(leftItems);
+//        leftListAdapter.notifyDataSetChanged();
+//
+//        rightListItems.clear();
+//        rightListItems.addAll(rightItems);
+//        rightListAdapter.notifyDataSetChanged();
+//    }
+
 }
