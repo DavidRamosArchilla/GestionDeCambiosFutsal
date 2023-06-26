@@ -3,7 +3,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_marginTop="?attr/actionBarSize"
-    android:background="?attr/colorOnSecondary">
+    android:background="?colorOnPrimary">
 
     <LinearLayout
         android:id="@+id/listsLayout"

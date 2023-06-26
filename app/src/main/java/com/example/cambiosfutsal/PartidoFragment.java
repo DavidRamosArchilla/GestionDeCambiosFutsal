@@ -199,10 +199,9 @@ public class PartidoFragment extends Fragment {
             notifyDataSetChanged();
 
             ItemViewHolder viewHolder = holders.get(items.size() - 1);
+            viewHolder.setTiempoAlPausar(0);
             viewHolder.getCronometroTiempo().setBase(SystemClock.elapsedRealtime());
         }
-
-
     }
 
     private static class ItemViewHolder extends RecyclerView.ViewHolder {
