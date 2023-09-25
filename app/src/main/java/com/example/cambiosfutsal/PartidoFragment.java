@@ -1,5 +1,4 @@
 package com.example.cambiosfutsal;
-
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -19,7 +18,6 @@ import android.widget.TextView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,17 +36,18 @@ public class PartidoFragment extends Fragment {
     private Chronometer cronometro = null;
     private AtomicLong tiempoAlPausar;
     private boolean relojPausado = true;
-    private List<String> jugadores;
+//    private List<String> jugadores;
+    private Equipo equipo;
 
     public PartidoFragment() {
         // Required empty public constructor
     }
 
     public PartidoFragment(List<String> jugadores) {
-        this.jugadores = jugadores;
-        int numTitulares = Math.min(jugadores.size(), 4);
-        adapterJugando = new ItemAdapter(new ArrayList<>(jugadores.subList(0,numTitulares)));
-        adapterBanquillo = new ItemAdapter(new ArrayList<>(jugadores.subList(numTitulares, jugadores.size())));
+//        this.jugadores = jugadores;
+        this.equipo = new Equipo(jugadores);
+        adapterJugando = new ItemAdapter(equipo.getNombresEnPista(), equipo);
+        adapterBanquillo = new ItemAdapter(equipo.getNombresBanquillo(), equipo);
     }
 
     @Override
@@ -92,36 +91,33 @@ public class PartidoFragment extends Fragment {
             else{
                 cronometro.stop();
                 relojPausado = true;
+                equipo.pausarCronometros(cronometro.getBase() - elapsedRealTime);
                 tiempoAlPausar.set(cronometro.getBase() - SystemClock.elapsedRealtime());
             }
         });
 
         Button botonCambio = view.findViewById(R.id.botonCambiarJugadores);
         botonCambio.setOnClickListener(v -> {
-            if(jugadores.size()>4){
-                ((CambioListerer) getActivity()).onRealizarCambio(jugadores.subList(0,4)
-                        , jugadores.subList(4, jugadores.size()));
+            if( (equipo.getTotalJugadores() > Equipo.MAX_JUGADORES_PISTA)){
+                ((CambioListerer) getActivity()).onRealizarCambio(equipo.getNombresEnPista(),
+                        equipo.getNombresBanquillo());
             }
             else{
                 Snackbar.make(view, "No hay suficientes jugadores para hcer un cambio", Snackbar.LENGTH_LONG).show();
             }
-
         });
     }
-
     public void addItem(String nombre) {
-        jugadores.add(nombre);
-        int numTitulares = Math.min(jugadores.size(), 4);
-        if (numTitulares == 4){
+        equipo.addJugador(nombre);
+        if (equipo.getTotalJugadores() >= Equipo.MAX_JUGADORES_PISTA){
             adapterBanquillo.addItem(nombre);
         }
         else{
             adapterJugando.addItem(nombre);
         }
     }
-
     public void removeItem(String nombre) {
-        jugadores.remove(nombre);
+        equipo.removeJugador(nombre);
         adapterBanquillo.removeItem(nombre);
         adapterJugando.removeItem(nombre);
     }
@@ -132,7 +128,8 @@ public class PartidoFragment extends Fragment {
         recyclerViewBanquillo.setAdapter(adapterBanquillo);
     }
     public void realizarCambio(String jugandoCambiado, String banquilloCambiado) {
-        Collections.swap(jugadores, jugadores.indexOf(jugandoCambiado), jugadores.indexOf(banquilloCambiado));
+//        Collections.swap(jugadores, jugadores.indexOf(jugandoCambiado), jugadores.indexOf(banquilloCambiado));
+        equipo.hacerCambio(jugandoCambiado, banquilloCambiado);
         adapterBanquillo.hacerCambio(banquilloCambiado, jugandoCambiado);
         adapterJugando.hacerCambio(jugandoCambiado, banquilloCambiado);
     }
@@ -141,9 +138,10 @@ public class PartidoFragment extends Fragment {
 
         private List<String> items;
         private List<PartidoFragment.ItemViewHolder> holders = new ArrayList<>();
-
-        public ItemAdapter(List<String> items) {
+        private Equipo equipo;
+        public ItemAdapter(List<String> items, Equipo equipo) {
             this.items = items;
+            this.equipo = equipo;
         }
 
         @NonNull
@@ -154,14 +152,18 @@ public class PartidoFragment extends Fragment {
             PartidoFragment.ItemViewHolder viewHolder = new PartidoFragment.ItemViewHolder(view);
             if(!holders.contains(viewHolder))
                 holders.add(viewHolder);
+
             return viewHolder;
         }
 
         @Override
         public void onBindViewHolder(@NonNull PartidoFragment.ItemViewHolder holder, int position) {
-            holder.getTextViewNombre().setText(items.get(position));
-            if(!holders.contains(holder))
-                holders.add(holder);
+            String nombreJugador = items.get(position);
+            Jugador jugador = equipo.getJugadorPorNombre(nombreJugador);
+            holder.getTextViewNombre().setText(nombreJugador);
+            holder.setTiempoAlPausar(jugador.getTiempoAlPausar());
+            holder.getCronometroTiempo().setBase(SystemClock.elapsedRealtime() + jugador.getTiempoAlPausar());
+
         }
 
         @Override
@@ -180,6 +182,7 @@ public class PartidoFragment extends Fragment {
                     cronometro.stop();
                     holder.setTiempoAlPausar(cronometro.getBase() - elapsedRealTime);
                 }
+
             }
         }
 
@@ -194,13 +197,13 @@ public class PartidoFragment extends Fragment {
         }
 
         public void hacerCambio(String jugadorParaQuitar, String jugadorParaAniadir){
-            items.add(jugadorParaAniadir);
-            items.remove(jugadorParaQuitar);
-            notifyDataSetChanged();
-
-            ItemViewHolder viewHolder = holders.get(items.size() - 1);
-            viewHolder.setTiempoAlPausar(0);
-            viewHolder.getCronometroTiempo().setBase(SystemClock.elapsedRealtime());
+            int posicionQuitado = items.indexOf(jugadorParaQuitar);
+            items.set(posicionQuitado, jugadorParaAniadir);
+            notifyItemChanged(posicionQuitado);
+//            ItemViewHolder viewHolder = getViewHolderByJugador(jugadorParaAniadir);
+//            ItemViewHolder viewHolder = holders.get(posicionQuitado);
+//            viewHolder.setTiempoAlPausar(0);
+//            viewHolder.getCronometroTiempo().setBase(SystemClock.elapsedRealtime());
         }
     }
 
